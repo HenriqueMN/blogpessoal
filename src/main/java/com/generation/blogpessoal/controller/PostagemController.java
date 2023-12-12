@@ -20,6 +20,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.generation.blogpessoal.model.Postagem;
 import com.generation.blogpessoal.repository.PostagemRepository;
+import com.generation.blogpessoal.repository.TemaRepository;
 
 import jakarta.validation.Valid;
 
@@ -55,6 +56,9 @@ public class PostagemController {
 	@Autowired
 	private PostagemRepository postagemRepository;
 	
+	@Autowired
+	private TemaRepository temaRepository;
+	
 	@GetMapping
 	public ResponseEntity<List<Postagem>> getAll(){ // O Método getAll() será do tipo ResponseEntity porquê ele responderá a Requisição HTTP (HTTP Request), com uma Resposta HTTP (HTTP Response).
 		return ResponseEntity.ok(postagemRepository.findAll());
@@ -72,19 +76,30 @@ public class PostagemController {
 	public ResponseEntity<List<Postagem>> getByTitulo(@PathVariable String titulo){
 		return ResponseEntity.ok(postagemRepository.findAllByTituloContainingIgnoreCase(titulo));
 	}
-		
+	
 	@PostMapping
-	public ResponseEntity<Postagem> post(@Valid @RequestBody Postagem postagem) { // Envia status 400: bad request caso inválido
-		return ResponseEntity.status(HttpStatus.CREATED) // Status 201: created
-				.body(postagemRepository.save(postagem));
+	public ResponseEntity<Postagem> post(@Valid @RequestBody Postagem postagem){ // Envia status 400: bad request caso inválido
+		if (temaRepository.existsById(postagem.getTema().getId()))
+			return ResponseEntity.status(HttpStatus.CREATED) // Status 201: created
+					.body(postagemRepository.save(postagem));
+			
+		throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tema não existe!", null);
 	}
 	
 	@PutMapping
-	public ResponseEntity<Postagem> put(@Valid @RequestBody Postagem postagem) {
-		return postagemRepository.findById(postagem.getId())
-				.map(resposta -> ResponseEntity.status(HttpStatus.OK) // Status 200: OK
-						.body(postagemRepository.save(postagem)))
-				.orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+	public ResponseEntity<Postagem> put(@Valid @RequestBody Postagem postagem){
+		if (postagemRepository.existsById(postagem.getId())){
+			
+			if (temaRepository.existsById(postagem.getTema().getId()))
+				return ResponseEntity.status(HttpStatus.OK) // Status 200: OK
+						.body(postagemRepository.save(postagem));
+			
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tema não existe!", null);
+			
+		}			
+			
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+		
 	}
 	
 	@ResponseStatus(HttpStatus.NO_CONTENT) // Status 204: no content
@@ -96,5 +111,13 @@ public class PostagemController {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND);
 		
 		postagemRepository.deleteById(id);				
+	}
+
+	public TemaRepository getTemaRepository() {
+		return temaRepository;
+	}
+
+	public void setTemaRepository(TemaRepository temaRepository) {
+		this.temaRepository = temaRepository;
 	}
 }
