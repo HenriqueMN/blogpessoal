@@ -23,7 +23,7 @@ public class Tema {
 	 * 
 	 * @OneToMany: configura a relação um para muitos com a classe postagem
 	 * * fetch = FetchType.LAZY define que os dados do tema não serão carregados até serem requisitados 
-	 * * mappedBy = "tema" define que quem comanda a relação é a classe Postagem 
+	 * * mappedBy = "tema" define que quem comanda a relação é a classe tema 
 	 * * cascade = CascadeType.REMOVE define que se o tema for apagado, todos os objetos da classe Postagem associados a ele serão apagados também
 	 * 
 	 */
